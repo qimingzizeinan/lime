@@ -1,0 +1,84 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Description of what the lane does"
+  lane :custom_lane do
+    # add actions here: https://docs.fastlane.tools/actions
+  end
+
+  # 定义一个全局变量api_key，下面都会要用到这个 api_key
+  # key_id 和 issuer_id 都可以在 AppStoreConnect后台 -> 用户和访问 -> 秘钥 这里找到
+  api_key = app_store_connect_api_key(
+    key_id: "9V444JW228",
+    issuer_id: "a9bae851-466a-4af4-8fd6-cc0fc46420cb",
+    key_filepath: "./AuthKey_9V444JW228.p8", # 上面下载的p8文件路径
+    duration: 1200, # optional (maximum 1200)
+    in_house: false # optional but may be required if using match/sigh
+  )
+
+  desc "下载所有需要的证书和描述文件到本地，不会重新创建证书和描述文件（只读方式）"
+  lane :match_all do
+    match(api_key: api_key, type: "development", readonly: true)
+    match(api_key: api_key, type: "adhoc", readonly: true)
+    match(api_key: api_key, type: "appstore", readonly: true)
+  end
+
+  desc "同步证书，如果证书过期或新增了设备，会重新创建证书和描述文件"
+  desc "该方法仅限管理员使用，其他开发成员只需要使用 match_all 方法即可"
+  lane :force_match do
+    match(api_key: api_key, type: "development", force_for_new_devices: true, clone_branch_directly: true)
+    match(api_key: api_key, type: "adhoc", force_for_new_devices: true)
+    match(api_key: api_key, type: "appstore")
+  end
+
+  desc "注册设备，并更新描述文件"
+  lane :sync_devices do
+    # devices.txt模板：
+    # http://devimages.apple.com/downloads/devices/Multiple-Upload-Samples.zip
+    register_devices(api_key: api_key, devices_file: "./devices.txt")
+    match(api_key: api_key, type: "development", force_for_new_devices: true, clone_branch_directly: true)
+    match(api_key: api_key, type: "adhoc", force_for_new_devices: true, clone_branch_directly: true)
+  end
+
+  # 构建测试包
+  lane :beta do
+    # 先同步adhoc证书和描述文件
+    match(api_key: api_key, type: "adhoc", readonly: true)
+    update_info_plist( # Change the Display Name of your app
+      plist_path: "./CMakeFiles/WordsRPG-mobile.dir/Info.plist",
+      display_name: "穿行记1.0.0"
+    )
+    # 省略其他步骤...
+    build_app(scheme: "chuanxingji", include_bitcode: true)
+  end 
+
+  lane :release do
+    # 先同步appstore证书和描述文件
+    match(api_key: api_key, type: "appstore", readonly: true)
+    # 省略其他步骤...
+    build_app(scheme: "chuanxingji")
+    # 上传应用到AppStore
+    upload_to_app_store(
+          api_key: api_key,
+          force: true, # Skip HTMl report verification
+          skip_screenshots: true,
+          skip_metadata: true,
+          submit_for_review: false,
+    )
+  end
+end
