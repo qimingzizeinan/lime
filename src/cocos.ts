@@ -56,7 +56,7 @@ export async function checkAndCopyYamlFiles(root: string): Promise<void> {
     choices: yamlFiles.map((file) => ({ title: file, value: file })),
   });
 
-  if (response.files.length === 0) {
+  if (!response.files || response.files.length === 0) {
     info('No YAML files will be generated.');
     return;
   }
