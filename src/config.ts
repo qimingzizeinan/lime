@@ -70,11 +70,9 @@ export interface Config {
   };
   deploy: Deploy[];
   tasks: {
-    [key: string]: Task;
+    [key: string]: Task | ((args?: unknown) => unknown);
   };
-  pipelines: {
-    [key: string]: string[];
-  };
+  pipelines: Record<string, string[]>;
 }
 
 /**
@@ -158,12 +156,12 @@ export async function parseConfigFile(filePath: string): Promise<Config> {
         setDefaultValues(
           data.fastlane,
           'root',
-          '{project.root}/build/ios/proj'
+          '{project.root}/build/ios/proj',
         );
         setDefaultValues(
           data.fastlane,
           'settingRoot',
-          '{project.root}/pack_configs'
+          '{project.root}/pack_configs',
         );
 
         setDefaultValues(data, 'manifest', {
@@ -229,8 +227,7 @@ export async function selectConfigFile(cwd: string = process.cwd()) {
   return new Promise<string>((resolve, reject) => {
     try {
       // Get all lime.*.yaml files in the specified directory
-      const files = glob.sync('lime.*.yaml', { cwd: cwd });
-
+      const files = glob.sync('lime.*.{cjs,js,yaml}', { cwd: cwd });
       // Convert file names into choices that prompts can use
       const choices = files.map((file) => ({
         title: file,

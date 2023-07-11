@@ -44,9 +44,9 @@ export async function cocosBuild(command: string) {
  */
 export async function checkAndCopyYamlFiles(root: string): Promise<void> {
   const yamlFiles = [
-    'lime.local.yaml',
-    'lime.development.yaml',
-    'lime.production.yaml',
+    'lime.local.js',
+    'lime.development.js',
+    'lime.production.js',
   ];
 
   const response = await prompts({

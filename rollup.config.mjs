@@ -2,7 +2,6 @@ import typescript from 'rollup-plugin-typescript2';
 import commonjs from '@rollup/plugin-commonjs';
 import copy from 'rollup-plugin-copy';
 import json from '@rollup/plugin-json';
-import { terser } from 'rollup-plugin-terser';
 
 export default {
   input: 'src/index.ts',
@@ -21,7 +20,7 @@ export default {
     typescript(),
     commonjs(),
     json(),
-    terser(),
+    // terser(),
   ],
-  external: ['commander', 'colors', 'archiver', 'js-yaml'],
+  external: ['commander', 'colors', 'archiver', 'js-yaml', 'fs', 'path'],
 };

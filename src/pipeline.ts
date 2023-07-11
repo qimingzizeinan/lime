@@ -31,7 +31,7 @@ export async function selectPipeline(config: Config): Promise<string | null> {
 export async function executePipelines(
   config: Config,
   targetPipeline: string,
-  environment: string
+  environment: string,
 ) {
   const { tasks, pipelines } = config;
 
@@ -56,8 +56,9 @@ export async function executePipelines(
       }
 
       info(`Starting task: ${taskName}`);
-
-      if (task.command) {
+      if (typeof task === 'function') {
+        await task();
+      } else if (task.command) {
         const options = task.root ? { cwd: task.root } : {};
         await runCommand(task.command, options);
       } else if (task.type) {
@@ -65,7 +66,7 @@ export async function executePipelines(
           case 'updateManifestVersion': {
             await updateFieldsInFile(
               config.manifest.version.root,
-              'version.manifest'
+              'version.manifest',
             );
             break;
           }
@@ -77,7 +78,7 @@ export async function executePipelines(
             await prepareFastlaneDirectory(
               config.fastlane.settingRoot,
               config.fastlane.root,
-              environment
+              environment,
             );
             break;
           }

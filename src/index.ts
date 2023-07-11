@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { parseConfigFile, Config, selectConfigFile } from '@/config';
+import { parseConfigFile, selectConfigFile } from '@/config';
 import { prepareEnvironmentConfigsBeforeBuild } from './fastlane';
 import {
   checkFastlane,
@@ -13,6 +13,7 @@ import { checkAndCopyYamlFiles } from './cocos';
 import { updateFieldsInFile } from './semver';
 import { executePipelines, selectPipeline } from './pipeline';
 import packageJSON from '../package.json';
+import path from 'path';
 
 async function init() {
   const program = new Command();
@@ -26,7 +27,7 @@ async function init() {
   // Add a custom help command
   program.addHelpCommand(
     'help [command]',
-    'Display help information for a specific command'
+    'Display help information for a specific command',
   );
 
   program
@@ -66,24 +67,54 @@ async function init() {
     .action(async () => {
       // Execute cocos pipeline packaging
       const envFilePath = await selectConfigFile();
-      const environment = extractPart(envFilePath);
+      if (!envFilePath) {
+        error('Please check if the configuration file is configured correctly');
+        return;
+      }
+      const fileExt = await path.extname(envFilePath);
+      const environment = await extractPart(envFilePath);
 
-      let config: Config | null = null;
-      // Set environment variables
-      try {
-        config = await parseConfigFile(envFilePath);
-        const pipeline = await selectPipeline(config);
+      if (fileExt === '.yaml' && environment) {
+        try {
+          // Set environment variables
+          const config = await parseConfigFile(envFilePath);
+          // 将 JavaScript 对象转换为字符串形式的模块代码
+          const moduleCode = `module.exports = ${JSON.stringify(
+            config,
+            null,
+            2,
+          )};`;
+          console.log('moduleCode', moduleCode);
+          const pipeline = await selectPipeline(config);
 
-        if (!pipeline) {
-          error(
-            'Please check if the pipelines field in the configuration file is configured correctly'
-          );
-          return;
+          if (!pipeline) {
+            error(
+              'Please check if the pipelines field in the configuration file is configured correctly',
+            );
+            return;
+          }
+
+          await executePipelines(config, pipeline, environment!);
+        } catch (error) {
+          console.error('error', error);
         }
+      }
+      if (fileExt === '.cjs' || fileExt === '.js') {
+        try {
+          // Set environment varia
+          const config = (await require(envFilePath))();
+          const pipeline = await selectPipeline(config);
+          if (!pipeline) {
+            error(
+              'Please check if the pipelines field in the configuration file is configured correctly',
+            );
+            return;
+          }
 
-        await executePipelines(config, pipeline, environment!);
-      } catch (error) {
-        console.error('error', error);
+          await executePipelines(config, pipeline, environment!);
+        } catch (error) {
+          console.error('error', error);
+        }
       }
     });
 

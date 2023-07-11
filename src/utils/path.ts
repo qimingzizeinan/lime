@@ -14,7 +14,7 @@ export const resolvePath = (_path: string, _file: string) =>
  * @param {string} filename - The filename to extract the part from.
  * @return {string|null} - The extracted part of the filename, or null if there is no match.
  */
-export function extractPart(filename: string): string | null {
-  const matched = filename.match(/lime\.(.*?)\.yaml/);
+export function extractPart(filename: string) {
+  const matched = filename.match(/lime\.(.*?)\.(?:yaml|cjs|js)/);
   return matched ? matched[1] : null;
 }
