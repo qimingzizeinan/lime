@@ -14,6 +14,7 @@ import { updateFieldsInFile } from './semver';
 import { executePipelines, selectPipeline } from './pipeline';
 import packageJSON from '../package.json';
 import path from 'path';
+import { createOrOverwriteSnippets } from './snippets';
 
 async function init() {
   const program = new Command();
@@ -33,7 +34,7 @@ async function init() {
   program
     .command('init')
     .description('Initialize the project, check the environment and copy files')
-    .addHelpText('after', '\nExample:\n  $ program init')
+    .addHelpText('after', '\nExample:\n  $ lime init')
     .action(async () => {
       // Check the environment
       success('Checking environment...');
@@ -54,10 +55,19 @@ async function init() {
   program
     .command('upgrade package')
     .description('Upgrade version field in package.json')
-    .addHelpText('after', '\nExample:\n  $ program upgrade package')
+    .addHelpText('after', '\nExample:\n  $ lime upgrade package')
     .action(async () => {
       // Update fields in the package.json file
       await updateFieldsInFile(process.cwd());
+    });
+
+  program
+    .command('snippets')
+    .description('create or overwrite snippets')
+    .addHelpText('after', '\nExample:\n  $ lime snippets')
+    .action(async () => {
+      // Update fields in the package.json file
+      await createOrOverwriteSnippets();
     });
 
   program

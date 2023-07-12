@@ -29,6 +29,28 @@ lime upgrade package
 lime pipeline
 ```
 
+##### 创建 vscode snippets
+
+查找执行目录下的 snippets 文件夹，为文件夹下的所有 js 文件创建 vscode 的 snippets
+
+```
+lime snippets
+```
+
+js 示例
+
+```javascript
+module.exports = {
+  body() {
+    return `
+      this.AddListener(EventDefine, item => {});
+    `;
+  },
+  prefix: 'lime.this.AddListener;',
+  description: '在layer中添加事件监听;',
+};
+```
+
 ## 配置说明
 
 ```javascript
